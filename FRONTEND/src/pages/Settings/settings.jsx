@@ -6,6 +6,8 @@ import img2 from '../../assets/IMAGES/Settings/sett-img-2.png';
 import img4 from '../../assets/IMAGES/Settings/sett-img-4.png';
 import dayjs from 'dayjs';
 import API from '../../services/api';
+import lightImg from '../../assets/IMAGES/Settings/2.jpg';
+import darkImg from '../../assets/IMAGES/Settings/sett-img-5.jpg';
 
 function CustomTabPanel({ children, value, index }) {
   return (
@@ -98,7 +100,7 @@ export default function Settingspage({ setTheme }) {
 
   const fetchActiveSchedule = async () => {
     try {
-      const res = await axios.get('/api/report/schedule/latest');
+      const res = await API.get('/report/schedule/latest');
       if (res.data?.data) {
         setActiveSchedule(res.data.data);
         setActiveType(res.data.data.type);
@@ -114,7 +116,7 @@ export default function Settingspage({ setTheme }) {
   const handleCancelSchedule = async () => {
     if (!activeSchedule?.type) return;
     try {
-      await axios.delete(`/api/report/schedule/${activeSchedule.type}`);
+      await API.delete(`/report/schedule/${activeSchedule.type}`);
       toast.success(`${activeSchedule.type} schedule canceled`);
       setActiveSchedule(null);
       setActiveType(null);
@@ -234,7 +236,7 @@ export default function Settingspage({ setTheme }) {
     `}
               >
                 <img
-                  src="src/assets/IMAGES/Settings/2.jpg"
+                  src={lightImg}
                   className="w-full h-[150px] object-cover rounded-lg"
                 />
 
@@ -258,7 +260,7 @@ export default function Settingspage({ setTheme }) {
   `}
               >
                 <img
-                  src="src/assets/IMAGES/Settings/sett-img-5.jpg"
+                  src={darkImg}
                   className="w-full h-[150px] object-cover rounded-lg"
                 />
 
@@ -267,6 +269,8 @@ export default function Settingspage({ setTheme }) {
                 </h6>
               </div>
             </div>
+
+            <EnableAlerts />
           </CustomTabPanel>
 
           <CustomTabPanel value={value} index={3}>
@@ -403,23 +407,27 @@ function Devicecontrol() {
   useEffect(() => {
     const fetchDevices = async () => {
       try {
-        const res = await fetch('/api/devices');
-        const data = await res.json();
-        if (data.status === 'success') {
-          setDevices(data.devices);
+        const res = await API.get('/devices');
+        const data = res.data;
 
-          // load from localStorage or default all ON
-          const saved = JSON.parse(localStorage.getItem('deviceStates')) || {};
-          const initial = {};
-          data.devices.forEach(d => {
-            initial[d.id] = saved[d.id] ?? true;
-          });
-          setDeviceStates(initial);
-        }
+        const list = Array.isArray(data) ? data : data.devices || [];
+
+        setDevices(list);
+
+        // load from localStorage or default all ON
+        const saved = JSON.parse(localStorage.getItem('deviceStates')) || {};
+        const initial = {};
+
+        list.forEach(d => {
+          initial[d.id] = saved[d.id] ?? true;
+        });
+
+        setDeviceStates(initial);
       } catch (error) {
         console.error('Error fetching devices:', error);
       }
     };
+
     fetchDevices();
   }, []);
 
@@ -522,7 +530,7 @@ function ReportScheduleModal({ type, onClose, onScheduled }) {
         formats,
       };
 
-      await axios.post('/api/report/schedule', payload);
+      await API.post('/report/schedule', payload);
 
       toast.success(`  ${type} report scheduled successfully`);
       localStorage.setItem('lastScheduledType', type); // save for future
@@ -538,7 +546,7 @@ function ReportScheduleModal({ type, onClose, onScheduled }) {
 
   useEffect(() => {
     const loadExisting = async () => {
-      const res = await axios.get('/api/report/schedule/latest');
+      const res = await API.get('/report/schedule/latest');
       const s = res.data?.data;
       if (s && s.type === type) {
         setTime(s.time);
@@ -657,5 +665,22 @@ function ReportScheduleModal({ type, onClose, onScheduled }) {
         </div>
       </div>
     </div>
+  );
+}
+
+function EnableAlerts() {
+  const enableNotifications = () => {
+    if (!window.OneSignal) {
+      console.error('OneSignal not loaded');
+      return;
+    }
+
+    window.OneSignal.push(() => {
+      window.OneSignal.registerForPushNotifications();
+    });
+  };
+
+  return (
+    <button onClick={enableNotifications}>🔔 Enable Battery Alerts</button>
   );
 }

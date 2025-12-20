@@ -2,6 +2,7 @@ import { ChevronLeft, Download } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import API from '../../services/api';
+import { downloadFile } from '../../utils/downloadFile';
 
 export default function Reportpage() {
   const [reports, setReports] = useState([]);
@@ -11,7 +12,7 @@ export default function Reportpage() {
     const fetchReports = async () => {
       try {
         setLoading(true);
-        const res = await axios.get('/api/report/list');
+        const res = await API.get('/report/list');
         const reportList = res.data?.data || [];
 
         if (!reportList.length) {
@@ -149,18 +150,16 @@ export default function Reportpage() {
                   <div className="flex gap-2">
                     {hasPdf && (
                       <a
-                        href={`/api/report/download/${report.name}.pdf`}
-                        target="_blank"
                         rel="noopener noreferrer"
                         className="p-2 rounded-lg transition-colors"
+                        onClick={() => downloadFile(`${report.name}.pdf`)}
                       >
                         <Download className="w-5 h-5 text-red-600  dark:text-[#ffffff] " />
                       </a>
                     )}
                     {hasExcel && (
                       <a
-                        href={`/api/report/download/${report.name}.xlsx`}
-                        target="_blank"
+                        onClick={() => downloadFile(`${report.name}.xlsx`)}
                         rel="noopener noreferrer"
                         className="p-2 rounded-lg transition-colors"
                       >

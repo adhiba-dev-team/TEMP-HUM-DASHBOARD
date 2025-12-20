@@ -222,7 +222,7 @@ export function startSerialListener(
             `Skipping alert for Device ${parsed.id} — still on cooldown (${minutes} min left)`
           );
         } else {
-          const alertMsg = `Device ${parsed.id} battery is low (${batteryValue}%)`;
+const alertMsg = `⚠️ Device ${parsed.id} battery critical: ${batteryValue}%`;
           console.log(
             `[Battery Alert] Triggered for Device ${parsed.id} → ${alertMsg}`
           );
@@ -230,33 +230,32 @@ export function startSerialListener(
           try {
             await sendPushNotification('Battery Alert', alertMsg);
 
-          if (!ALERT_EMAIL) {
-            console.error(
-              '[Battery Alert] ALERT_EMAIL not set, skipping email send.'
-            );
-          } else {
+            if (!ALERT_EMAIL) {
+              console.error(
+                '[Battery Alert] ALERT_EMAIL not set, skipping email send.'
+              );
+            } else {
+              console.log(
+                `[Battery Alert] Sending email to ${ALERT_EMAIL} for Device ${parsed.id}`
+              );
+
+              const html = batteryLowTemplate({
+                deviceId: parsed.id,
+                location: parsed.loc || 'Unknown Location',
+                battery: batteryValue,
+              });
+
+              await sendMail(
+                ALERT_EMAIL,
+                `Battery Alert - Device ${parsed.id}`,
+                html
+              );
+            }
+
+            await redisClient.setEx(cooldownKey, 60, 'true'); // 1 minute
+
             console.log(
-              `[Battery Alert] Sending email to ${ALERT_EMAIL} for Device ${parsed.id}`
-            );
-
-            const html = batteryLowTemplate({
-              deviceId: parsed.id,
-              location: parsed.loc || 'Unknown Location',
-              battery: batteryValue,
-            });
-
-            await sendMail(
-              ALERT_EMAIL,
-              `Battery Alert - Device ${parsed.id}`,
-              html
-            );
-          }
-
-
-            await redisClient.setEx(cooldownKey, 300, 'true'); // 5 minutes
-
-            console.log(
-              `Cooldown started for Device ${parsed.id} (1 hour, key = ${cooldownKey})`
+              `Cooldown started for Device ${parsed.id} (1 min, key = ${cooldownKey})`
             );
           } catch (err) {
             console.error(

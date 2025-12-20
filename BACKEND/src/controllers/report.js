@@ -10,9 +10,9 @@ import utc from 'dayjs/plugin/utc.js';
 dayjs.extend(utc);
 
 function convertISTtoUTC(time) {
-  // time = "HH:mm"
   return dayjs(`2025-01-01 ${time}+05:30`).utc().format('HH:mm');
 }
+
 
 const REPORT_DIR = path.join(process.cwd(), 'reports');
 if (!fs.existsSync(REPORT_DIR)) fs.mkdirSync(REPORT_DIR);
@@ -308,12 +308,8 @@ export const generateReport = async (req, res) => {
 
               <table width="100%" cellpadding="12" style="border:1px solid #e0e0e0; border-radius:6px; margin-top:20px; font-size:14px; color:#333;">
                 <tr>
-                  <td><strong>Location:</strong></td>
-                  <td>${location}</td>
-                </tr>
-                <tr>
                   <td><strong>Device ID:</strong></td>
-                  <td>${deviceId}</td>
+                  <td>All Active Devices</td>
                 </tr>
                 <tr>
                   <td><strong>Report Date:</strong></td>

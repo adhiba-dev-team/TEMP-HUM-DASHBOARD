@@ -7,14 +7,30 @@ dotenv.config();
 const SERIAL_PORT = process.env.SERIAL_PORT || 'COM3';
 const BAUD_RATE = Number(process.env.BAUD_RATE) || 9600;
 
-const SERVER_URL = process.env.SERVER_URL;
-const API_KEY = process.env.DEVICE_API_KEY;
-const DEVICE_ID = process.env.DEVICE_ID;
+
+const SERVER_URL = process.env.SERVER_URL?.trim();
+const API_KEY = process.env.DEVICE_API_KEY?.trim();
 
 if (!SERVER_URL) {
-  console.log('SERVER_URL missing in .env');
+  console.error('❌ SERVER_URL missing or empty');
   process.exit(1);
 }
+
+if (!API_KEY) {
+  console.error('❌ DEVICE_API_KEY missing or empty');
+  process.exit(1);
+}
+
+console.log('SERVER_URL RAW:', JSON.stringify(process.env.SERVER_URL));
+console.log('SERVER_URL CLEAN:', JSON.stringify(SERVER_URL));
+console.log('API KEY RAW LENGTH:', process.env.DEVICE_API_KEY?.length);
+console.log('API KEY CLEAN LENGTH:', API_KEY.length);
+
+
+
+const DEVICE_ID = process.env.DEVICE_ID;
+
+
 
 console.log('Starting Serial Client...');
 console.log('Port:', SERIAL_PORT);

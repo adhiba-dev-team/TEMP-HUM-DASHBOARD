@@ -1,12 +1,9 @@
 import db from '../config/db.js';
+import { sendBatteryLowPush } from '../utils/oneSignal.js';
 
 export function addDevice(req, res) {
   try {
     const { id, location, name } = req.body;
-
-    if (!id || !location || !name) {
-      return res.status(400).json({ error: 'All fields are required' });
-    }
 
     // Check using PRIMARY KEY "id"
     const exists = db.prepare(`SELECT * FROM devices WHERE id = ?`).get(id);
@@ -286,4 +283,21 @@ export function getUSBConnectedDevices(req, res) {
     console.log(err);
     res.status(500).json({ error: 'Failed to fetch USB devices' });
   }
+}
+
+
+
+
+const BATTERY_LOW = 3.5;
+
+export async function handleTelemetry(req, res) {
+  const { deviceId, battery } = req.body;
+
+  // save telemetry normally...
+
+  if (battery <= BATTERY_LOW) {
+    await sendBatteryLowPush(deviceId, battery);
+  }
+
+  res.json({ ok: true });
 }

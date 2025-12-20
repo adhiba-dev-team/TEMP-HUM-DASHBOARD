@@ -14,10 +14,8 @@ export default function ListPage() {
       try {
         setLoading(true);
 
-        //   Get all registered devices
-        const res = await axios.get('/api/devices');
+        const res = await API.get('/devices');
 
-        // Some APIs return { devices: [...] } — handle both cases
         const deviceList = Array.isArray(res.data)
           ? res.data
           : res.data?.devices || [];
@@ -32,7 +30,7 @@ export default function ListPage() {
         const results = await Promise.allSettled(
           deviceList.map(async device => {
             try {
-              const dataRes = await axios.get(`/api/devices/${device.id}`);
+              const dataRes = await API.get(`/devices/${device.id}`);
 
               // 🔥 NEW API FORMAT
               const d = dataRes.data?.today;

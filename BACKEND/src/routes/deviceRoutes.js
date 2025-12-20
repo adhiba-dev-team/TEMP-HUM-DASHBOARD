@@ -5,10 +5,12 @@ import {
   getSingleDevice,
   getUSBConnectedDevices,
 } from '../controllers/deviceController.js';
+import { validate } from '../middlewares/validator.js';
+import { addDeviceValidator } from '../validators/deviceValidators.js';
 
 const router = express.Router();
 
-router.post('/', addDevice);
+router.post('/', addDeviceValidator, validate, addDevice);
 
 // GET /devices
 router.get('/', getAllDevices);

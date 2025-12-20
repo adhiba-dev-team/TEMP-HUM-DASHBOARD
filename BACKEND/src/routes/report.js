@@ -7,6 +7,8 @@ import {
   getReportList,
   downloadReport,
 } from '../controllers/report.js';
+import path from 'path';
+import fs from 'fs';
 
 const router = express.Router();
 
@@ -26,6 +28,15 @@ router.delete('/schedule/:type', cancelSchedule);
 router.get('/list', getReportList);
 
 // Download report
-router.get('/download/:filename', downloadReport);
+router.get('/download/:filename', (req, res) => {
+  const filePath = path.join(process.cwd(), 'reports', req.params.filename);
+
+  if (!fs.existsSync(filePath)) {
+    return res.status(404).send('File not found');
+  }
+
+  res.download(filePath);
+});
+
 
 export default router;

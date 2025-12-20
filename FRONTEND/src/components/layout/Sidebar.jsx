@@ -17,17 +17,24 @@ import {
   DialogTitle,
   Button,
 } from '@mui/material';
-import {
-  Menu,
-  ChevronLeft,
-  Dashboard,
-  Thermostat,
-  WaterDrop,
-  Report,
-  Notifications,
-  Settings,
-  Logout,
-} from '@mui/icons-material';
+import DashboardIcon from '@mui/icons-material/Dashboard';
+import DevicesIcon from '@mui/icons-material/Devices';
+import ListAltIcon from '@mui/icons-material/ListAlt';
+import ThermostatIcon from '@mui/icons-material/Thermostat';
+import AssessmentIcon from '@mui/icons-material/Assessment';
+import SupportAgentIcon from '@mui/icons-material/SupportAgent';
+import SettingsIcon from '@mui/icons-material/Settings';
+
+import MenuIcon from '@mui/icons-material/Menu';
+import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
+import DashboardOutlinedIcon from '@mui/icons-material/DashboardOutlined';
+import ThermostatOutlinedIcon from '@mui/icons-material/ThermostatOutlined';
+import WaterDropOutlinedIcon from '@mui/icons-material/WaterDropOutlined';
+import AssessmentOutlinedIcon from '@mui/icons-material/AssessmentOutlined';
+import NotificationsOutlinedIcon from '@mui/icons-material/NotificationsOutlined';
+import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
+import LogoutIcon from '@mui/icons-material/Logout';
+
 import { styled } from '@mui/material/styles';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import WhiteLogo from '../../assets/LOGOS/whitelogo.png';
@@ -83,12 +90,12 @@ const StyledDrawer = styled(Drawer)(({ theme, open, appTheme }) => ({
 }));
 
 const menuItems = [
-  { text: 'Overview', icon: <Dashboard />, path: '/Overview' },
-  { text: 'List', icon: <Thermostat />, path: '/List' },
-  { text: 'Device', icon: <WaterDrop />, path: '/device' },
-  { text: 'Report', icon: <Report />, path: '/reports' },
-  { text: 'Support', icon: <Notifications />, path: '/support' },
-  { text: 'Settings', icon: <Settings />, path: '/settings' },
+  { text: 'Overview', icon: <DashboardIcon />, path: '/Overview' },
+  { text: 'List', icon: <ListAltIcon />, path: '/List' },
+  { text: 'Device', icon: <DevicesIcon />, path: '/device' },
+  { text: 'Report', icon: <AssessmentIcon />, path: '/reports' },
+  { text: 'Support', icon: <SupportAgentIcon />, path: '/support' },
+  { text: 'Settings', icon: <SettingsIcon />, path: '/settings' },
 ];
 
 export default function Sidebar({ appTheme = 'light' }) {
@@ -114,7 +121,7 @@ export default function Sidebar({ appTheme = 'light' }) {
   };
 
   return (
-    <Box sx={{ display: 'flex', height: '100vh' , width:"fit-content" }}>
+    <Box sx={{ display: 'flex', height: '100vh', width: 'fit-content' }}>
       <CssBaseline />
 
       <StyledDrawer variant="permanent" open={open} appTheme={appTheme}>
@@ -125,14 +132,14 @@ export default function Sidebar({ appTheme = 'light' }) {
               <img
                 src={WhiteLogo}
                 alt="Logo"
-                style={{ width: '100%', height: '50px'}}
+                style={{ width: '100%', height: '50px' }}
               />
             </Box>
           ) : (
             <Box sx={{ mx: 'auto' }}></Box>
           )}
           <IconButton onClick={handleDrawerToggle} sx={{ color: 'white' }}>
-            {open ? <ChevronLeft /> : <Menu />}
+            {open ? <ChevronLeftIcon /> : <MenuIcon />}
           </IconButton>
         </DrawerHeader>
 
@@ -242,7 +249,7 @@ export default function Sidebar({ appTheme = 'light' }) {
                 mr: open ? 1.5 : 0,
               }}
             >
-              <Logout />
+              <LogoutIcon />
             </ListItemIcon>
 
             {open && (

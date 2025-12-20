@@ -6,6 +6,7 @@ import Stack from '@mui/material/Stack';
 import { X } from 'lucide-react';
 import { Modal, Box } from '@mui/material';
 import { useOutletContext } from 'react-router-dom';
+import API from '../../services/api';
 
 export default function DeviceList() {
   const [devices, setDevices] = useState([]);
@@ -14,14 +15,15 @@ export default function DeviceList() {
   const { theme } = useOutletContext();
 
   // Fetch devices
-  useEffect(() => {
-    fetch('/api/devices')
-      .then(res => res.json())
-      .then(data => {
-        setDevices(Array.isArray(data) ? data : data.devices || []);
-      })
-      .catch(err => console.error('Error fetching devices:', err));
-  }, []);
+useEffect(() => {
+  API.get('/devices')
+    .then(res => {
+      const data = res.data;
+      setDevices(Array.isArray(data) ? data : data.devices || []);
+    })
+    .catch(err => console.error('Error fetching devices:', err));
+}, []);
+
 
   // Pagination Logic
   const totalPages = Math.ceil(devices.length / devicesPerPage);
@@ -46,17 +48,13 @@ export default function DeviceList() {
 
   // Save update
   const handleUpdate = async id => {
-    const res = await fetch('/api/devices', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        id,
-        name: editForm.name,
-        location: editForm.location,
-      }),
+    const res = await API.post('/devices', {
+      id,
+      name: editForm.name,
+      location: editForm.location,
     });
 
-    if (res.ok) {
+    if (res.status === 200) {
       alert('Device updated!');
       setEditDevice(null);
       window.location.reload();
@@ -78,7 +76,7 @@ export default function DeviceList() {
           </Link>
         </div>
 
-        <AddDeviceModal theme={theme} />
+        <AddDeviceModal theme={theme} devices={devices} />
       </div>
 
       {/* Device Cards */}
@@ -260,7 +258,7 @@ export default function DeviceList() {
   );
 }
 
-function AddDeviceModal({ theme }) {
+function AddDeviceModal({ theme, devices }) {
   const [open, setOpen] = useState(false);
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
@@ -269,19 +267,15 @@ function AddDeviceModal({ theme }) {
   const [isEditing, setIsEditing] = useState(false);
 
   useEffect(() => {
-    fetch('/api/devices/usb/list')
-      .then(res => res.json())
-      .then(data => setAvailableIds(data.devices || []));
+    API.get('/devices/usb/list').then(res =>
+      setAvailableIds(res.data.devices || [])
+    );
   }, []);
 
   const handleSave = async () => {
-    const res = await fetch('/api/devices', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(formData),
-    });
+    const res = await API.post('/devices', formData);
 
-    if (res.ok) {
+    if (res.status === 200 || res.status === 201) {
       alert('Device added successfully');
       window.location.reload();
     } else {

@@ -4,7 +4,6 @@ import API from '../../services/api';
 import toast from 'react-hot-toast';
 import loginimage from '../../assets/IMAGES/loginimg.jpg';
 import WhiteLogo from '../../assets/LOGOS/nyslogo.png';
-import axios from 'axios';
 
 function Forgotpassword() {
   const navigate = useNavigate();
@@ -16,11 +15,11 @@ function Forgotpassword() {
     setLoading(true);
 
     try {
-      const res = await axios.post('/api/auth/forgot-password', {
+      const res = await API.post('/auth/forgot-password', {
         email,
       });
 
-      toast.success('OTP sent successfully! Check your email ');
+      toast.success(res.data.message || 'OTP sent successfully!');
 
       // Save email temporarily for OTP verification page
       localStorage.setItem('reset_email', email);

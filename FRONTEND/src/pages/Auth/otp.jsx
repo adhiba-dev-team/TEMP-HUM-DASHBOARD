@@ -4,7 +4,6 @@ import API from '../../services/api';
 import toast from 'react-hot-toast';
 import loginimage from '../../assets/IMAGES/loginimg.jpg';
 import WhiteLogo from '../../assets/LOGOS/nyslogo.png';
-import axios from 'axios';
 
 function Otp() {
   const navigate = useNavigate();
@@ -41,12 +40,13 @@ function Otp() {
 
     setLoading(true);
     try {
-      const res = await axios.post('/api/auth/verify-otp', {
-        email,
-        otp,
-      });
+     const res = await API.post('/auth/verify-otp', {
+       email,
+       otp,
+     });
 
-      toast.success('OTP verified successfully');
+
+toast.success(res.data?.message || 'OTP verified successfully');
 
       // Save OTP for reset password API
       localStorage.setItem('reset_otp', otp);

@@ -1,13 +1,22 @@
 import express from 'express';
 import db from '../config/db.js';
+import redisClient from '../config/redis.js';
+import { sendMail } from '../services/mailService.js';
+import { sendPushNotification } from '../services/onesignalService.js';
 
 const router = express.Router();
 
 router.post('/data', (req, res) => {
+  console.log('🔥 /api/iot/data HIT');
+  console.log('HEADERS:', req.headers);
+  console.log('BODY:', req.body);
+
   try {
+    // ✅ DEVICE AUTH (API KEY ONLY)
     const apiKey = req.headers['x-api-key'];
+
     if (!apiKey || apiKey !== process.env.DEVICE_API_KEY) {
-      return res.status(401).json({ error: 'Unauthorized' });
+      return res.status(401).json({ error: 'invalid apikey' });
     }
 
     const { deviceId, temperature, humidity, battery, timestamp } = req.body;
@@ -39,20 +48,17 @@ router.post('/data', (req, res) => {
     );
 
     db.prepare(
-      `UPDATE devices
-       SET last_update = datetime('now')
-       WHERE id = ?`
+      `UPDATE devices SET last_update = datetime('now') WHERE id = ?`
     ).run(deviceId);
 
-    if (global.io) {
-      global.io.emit('iot:data', {
-        deviceId,
-        temperature,
-        humidity,
-        battery,
-        timestamp,
-      });
-    }
+    // 🔥 socket
+    global.io?.emit('device_update', {
+      deviceId,
+      temperature,
+      humidity,
+      battery,
+      timestamp,
+    });
 
     return res.json({ success: true });
   } catch (err) {

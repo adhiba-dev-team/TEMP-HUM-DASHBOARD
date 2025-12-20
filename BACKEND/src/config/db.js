@@ -63,11 +63,42 @@ db.exec(`
     formats TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   );
+
+  -- 🔔 ADD THIS (IMPORTANT)
+  CREATE TABLE IF NOT EXISTS push_subscriptions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    endpoint TEXT UNIQUE NOT NULL,
+    p256dh TEXT NOT NULL,
+    auth TEXT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
 `);
+
 
 export function createDeviceTable(deviceId) {
   const tableName = `device_${deviceId}`;
 
+  // Check device record
+  const device = db.prepare('SELECT * FROM devices WHERE id = ?').get(deviceId);
+
+  // Auto-provision ONLY if not deleted
+  if (!device) {
+    db.prepare(
+      `
+      INSERT INTO devices (id, name, last_update, is_active, is_deleted)
+      VALUES (?, ?, ?, 1, 0)
+    `
+    ).run(
+      deviceId,
+      tableName,
+      dayjs().tz('Asia/Kolkata').format('YYYY-MM-DD HH:mm:ss')
+    );
+  } else if (device.is_deleted === 1) {
+    // Device was intentionally removed
+    throw new Error(`Device ${deviceId} is deleted`);
+  }
+
+  // Create table safely
   db.exec(`
     CREATE TABLE IF NOT EXISTS ${tableName} (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -78,18 +109,9 @@ export function createDeviceTable(deviceId) {
     );
   `);
 
-const exists = db.prepare('SELECT id FROM devices WHERE id = ?').get(deviceId);
-
-
-if (!exists) {
-  db.prepare(
-    'INSERT INTO devices (id, name, last_update) VALUES (?, ?, ?)'
-  ).run(deviceId, tableName, dayjs().tz("Asia/Kolkata").format("YYYY-MM-DD HH:mm:ss"));
-}
-
-
   return tableName;
 }
+
 
 const insertReadingTx = db.transaction((tableName, t, h, bs) => {
   db.prepare(
@@ -105,23 +127,28 @@ const insertReadingTx = db.transaction((tableName, t, h, bs) => {
 
 export async function insertIfChanged(deviceId, data) {
   await queueWrite(() => {
-    const tableName = createDeviceTable(deviceId);
+    try {
+      const tableName = createDeviceTable(deviceId);
 
-    const last = db
-      .prepare(`SELECT * FROM ${tableName} ORDER BY id DESC LIMIT 1`)
-      .get();
+      const last = db
+        .prepare(`SELECT * FROM ${tableName} ORDER BY id DESC LIMIT 1`)
+        .get();
 
-    const noChange =
-      last &&
-      last.temperature === data.t &&
-      last.humidity === data.h &&
-      last.battery === data.bs;
+      const noChange =
+        last &&
+        last.temperature === data.t &&
+        last.humidity === data.h &&
+        last.battery === data.bs;
 
-    if (!noChange) {
-      insertReadingTx(tableName, data.t, data.h, data.bs);
+      if (!noChange) {
+        insertReadingTx(tableName, data.t, data.h, data.bs);
+      }
+    } catch {
+      // silently ignore deleted devices
     }
   });
 }
+
 
 export function getLastRecord(deviceId) {
   try {

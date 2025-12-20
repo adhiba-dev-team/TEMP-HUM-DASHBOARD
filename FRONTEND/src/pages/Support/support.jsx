@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronDown } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { toast, Toaster } from 'react-hot-toast';
+import API from '../../services/api';
 
 export default function SupportPage() {
   const [devices, setDevices] = useState([]);
@@ -13,10 +14,13 @@ export default function SupportPage() {
 
   //   Fetch devices from API
   useEffect(() => {
-    fetch('/api/devices')
-      .then(res => res.json())
-      .then(data => {
-        if (data.status === 'success') {
+    API.get('/devices')
+      .then(res => {
+        const data = res.data;
+
+        if (Array.isArray(data)) {
+          setDevices(data);
+        } else if (data.devices) {
           setDevices(data.devices);
         } else {
           toast.error('Failed to load devices');
@@ -38,32 +42,40 @@ export default function SupportPage() {
   };
 
   //   Handle form submit
-  const handleSubmit = async e => {
-    e.preventDefault();
-    if (!deviceId || !deviceName) {
-      toast.error('Please select a device');
-      return;
-    }
+ const handleSubmit = async e => {
+   e.preventDefault();
 
-    setLoading(true);
-    const res = await fetch('/api/support/send', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ deviceId, deviceName, description }),
-    });
+   if (!deviceId || !deviceName) {
+     toast.error('Please select a device');
+     return;
+   }
 
-    const data = await res.json();
-    setLoading(false);
+   setLoading(true);
 
-    if (data.success) {
-      toast.success('Mail sent successfully!');
-      setDeviceId('');
-      setDeviceName('');
-      setDescription('');
-    } else {
-      toast.error(data.message || 'Failed to send mail.');
-    }
-  };
+   try {
+     const res = await API.post('/support/send', {
+       deviceId,
+       deviceName,
+       description,
+     });
+
+     const data = res.data;
+
+     if (data.success) {
+       toast.success('Mail sent successfully!');
+       setDeviceId('');
+       setDeviceName('');
+       setDescription('');
+     } else {
+       toast.error(data.message || 'Failed to send mail.');
+     }
+   } catch (err) {
+     toast.error('Error sending request');
+   } finally {
+     setLoading(false);
+   }
+ };
+
 
   return (
     <div className="min-h-fit p-6">

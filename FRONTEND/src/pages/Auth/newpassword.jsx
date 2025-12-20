@@ -3,10 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import API from '../../services/api';
 import toast from 'react-hot-toast';
 import loginimage from '../../assets/IMAGES/loginimg.jpg';
-import { Eye, EyeOff } from 'lucide-react'; // 👁️ Eye icons
+import { Eye, EyeOff } from 'lucide-react'; 
 import WhiteLogo from '../../assets/LOGOS/nyslogo.png';
-import axios from 'axios';
-
 
 function Newpassword() {
   const navigate = useNavigate();
@@ -31,7 +29,7 @@ function Newpassword() {
 
     setLoading(true);
     try {
-      await axios.post('/api/auth/reset-password', {
+      await API.post('/auth/reset-password', {
         email,
         otp,
         newPassword: password,

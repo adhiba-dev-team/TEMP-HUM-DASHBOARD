@@ -26,8 +26,9 @@ export default function DeviceDetails() {
   useEffect(() => {
     const fetchToday = async () => {
       try {
-        const res = await fetch('/api/devices/1');
-        const json = await res.json();
+        const res = await API.get('/devices/1');;
+      const json = res.data;
+
         setDeviceMeta(json); // { status, deviceId, today }
       } catch (err) {
         console.error('Device Fetch Error:', err);
@@ -61,10 +62,9 @@ export default function DeviceDetails() {
 
     try {
       setRangeLoading(true);
-      const res = await fetch(
-        `/api/devices/1?view=range&from=${from}&to=${to}`
-      );
-      const json = await res.json();
+      const res = await API.get(`/devices/1?view=range&from=${from}&to=${to}`);
+     const json = res.data;
+
       // expects: { data: [...], summary: { days, avgTemp, avgHum } }
       setRangeSummary(json.summary || null);
     } catch (e) {
@@ -185,27 +185,24 @@ function Thisweek() {
     fetchData();
   }, []);
 
-  const fetchData = async () => {
-    try {
-      const [hourRes, weekRes, monthRes] = await Promise.all([
-        fetch('/api/devices/1?view=hourly'),
-        fetch('/api/devices/1?view=weekly'),
-        fetch('/api/devices/1?view=monthly'),
-      ]);
+ const fetchData = async () => {
+   try {
+     const [hourRes, weekRes, monthRes] = await Promise.all([
+       API.get('/devices/1?view=hourly'),
+       API.get('/devices/1?view=weekly'),
+       API.get('/devices/1?view=monthly'),
+     ]);
 
-      const hourJson = await hourRes.json();
-      const weekJson = await weekRes.json();
-      const monthJson = await monthRes.json();
+     setData({
+       hours: hourRes.data.hourlyBreakdown ?? [],
+       week: weekRes.data.weeklyBreakdown ?? [],
+       months: monthRes.data.monthlyBreakdown ?? [],
+     });
+   } catch (err) {
+     console.error('Analytics Fetch Error:', err);
+   }
+ };
 
-      setData({
-        hours: hourJson.hourlyBreakdown ?? [],
-        week: weekJson.weeklyBreakdown ?? [],
-        months: monthJson.monthlyBreakdown ?? [],
-      });
-    } catch (err) {
-      console.error('Analytics Fetch Error:', err);
-    }
-  };
 
   if (!data) return <p className="p-4">Loading...</p>;
 
@@ -364,8 +361,8 @@ const Graph = () => {
     const fetchGraphData = async () => {
       try {
         const [hourRes, weekRes] = await Promise.all([
-          axios.get('/api/devices/1?view=hourly'),
-          axios.get('/api/devices/1?view=weekly'),
+          API.get('/devices/1?view=hourly'),
+          API.get('/devices/1?view=weekly'),
         ]);
 
         setGraphData({
@@ -602,8 +599,8 @@ const Circlechart = () => {
 
   const fetchDevice = async () => {
     try {
-      const res = await fetch('/api/devices/1');
-      const json = await res.json();
+      const res = await API.get('/devices/1');
+      const json = res.data; // ✅
       setToday(json.today);
     } catch (e) {
       console.log('Error:', e);
@@ -677,8 +674,8 @@ const DeviceInfo = () => {
   useEffect(() => {
     const fetchDevice = async () => {
       try {
-        const res = await fetch('/api/devices/1');
-        const json = await res.json();
+        const res = await API.get('/devices/1');
+        const json = res.data; // ✅
 
         setDevice({
           id: json.deviceId,

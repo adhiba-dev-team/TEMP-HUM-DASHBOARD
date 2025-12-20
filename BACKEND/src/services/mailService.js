@@ -4,8 +4,11 @@ import { google } from 'googleapis';
 import dotenv from 'dotenv';
 dotenv.config();
 
-const CREDENTIALS_PATH = path.join(process.cwd(), 'credentials.json');
-const TOKEN_PATH = path.join(process.cwd(), 'token.json');
+const __dirname = new URL('.', import.meta.url).pathname;
+
+const CREDENTIALS_PATH = path.join(__dirname, '../../credentials.json');
+const TOKEN_PATH = path.join(__dirname, '../../token.json');
+
 
 function loadCredentials() {
   return JSON.parse(fs.readFileSync(CREDENTIALS_PATH, 'utf8'));
@@ -15,25 +18,29 @@ function loadToken() {
   return JSON.parse(fs.readFileSync(TOKEN_PATH, 'utf8'));
 }
 
-
 export async function sendMail(to, subject, html, attachments = []) {
+  // 🔧 Step 3: Log before sending mail (TEMP)
+  console.log('[MAIL DEBUG]', {
+    cwd: process.cwd(),
+    credentialsExists: fs.existsSync(CREDENTIALS_PATH),
+    tokenExists: fs.existsSync(TOKEN_PATH),
+    mailUser: process.env.MAIL_USER,
+  });
+
   try {
     if (!to || to.trim() === '') {
       throw new Error('Recipient email is required');
     }
 
-    const credentials = loadCredentials();
-    const token = loadToken();
+const credentials = loadCredentials();
+const token = loadToken();
 
-    const { client_id, client_secret, redirect_uris } = credentials.installed;
+const { client_id, client_secret, redirect_uris } = credentials.web;
 
-    const auth = new google.auth.OAuth2(
-      client_id,
-      client_secret,
-      redirect_uris[0]
-    );
+const auth = new google.auth.OAuth2(client_id, client_secret, redirect_uris[0]);
 
-    auth.setCredentials(token);
+auth.setCredentials(token);
+
 
     const gmail = google.gmail({ version: 'v1', auth });
 
@@ -68,7 +75,6 @@ ${fileData}
 
     message += `\n--${boundary}--`;
 
-    // Encode
     const encodedMessage = Buffer.from(message)
       .toString('base64')
       .replace(/\+/g, '-')
@@ -82,10 +88,15 @@ ${fileData}
 
     console.log('📨 Gmail sent to:', to);
   } catch (error) {
-    console.error('❌ Gmail Error:', error);
+    console.error('❌ Gmail Error full:', {
+      message: error.message,
+      errors: error.errors,
+      response: error.response?.data,
+    });
     throw error;
   }
 }
+
 
 export async function sendGmail(to, subject, html, attachments = []) {
   try {
@@ -153,7 +164,7 @@ export async function sendGmail(to, subject, html, attachments = []) {
       attachments.length
     );
   } catch (err) {
-    console.error('❌ Gmail sending error:', err);
+    console.error('Gmail sending error:', err);
     throw err;
   }
 }

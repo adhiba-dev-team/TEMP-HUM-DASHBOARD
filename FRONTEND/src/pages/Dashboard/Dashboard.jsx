@@ -23,6 +23,7 @@ import { PieChart } from '@mui/x-charts/PieChart';
 import API from '../../services/api';
 import { Toaster } from 'react-hot-toast';
 import dayjs from 'dayjs';
+import useDeviceSocket from '../../hooks/useDeviceSocket';
 
 export default function Dashboard() {
   const [devices, setDevices] = useState([]);
@@ -52,14 +53,15 @@ export default function Dashboard() {
       try {
         setLoadingDevices(true);
 
-        const listRes = await axios.get('/api/devices');
+        const listRes = await API.get('/devices');
         const deviceListRes = listRes.data?.devices || [];
 
         const results = await Promise.allSettled(
           deviceListRes.map(async d => {
             try {
-              const res = await axios.get(`/api/devices/${d.id}`);
+              const res = await API.get(`/devices/${d.id}`);
               const today = res.data?.today;
+
               if (!today) return null;
 
               return {
@@ -74,8 +76,7 @@ export default function Dashboard() {
                     ? temp1
                     : temp3,
               };
-            } catch (error) {
-              console.error('Fetch failed for device:', d.id, error);
+            } catch {
               return null;
             }
           })
@@ -85,9 +86,9 @@ export default function Dashboard() {
           .filter(r => r.status === 'fulfilled' && r.value)
           .map(r => r.value);
 
-        // ⬇️ NEW CODE: Filter by toggle state
         const savedStates =
           JSON.parse(localStorage.getItem('deviceStates')) || {};
+
         const filteredDevices = finalList.filter(
           d => savedStates[d.id] !== false
         );
@@ -112,7 +113,7 @@ export default function Dashboard() {
     setLoading(true);
 
     try {
-      const res = await axios.get('/api/analytics/average');
+      const res = await API.get('/analytics/average');
       const api = res.data || {};
 
       // Store overall averages
@@ -174,7 +175,42 @@ export default function Dashboard() {
 
   useEffect(() => {
     fetchAverageData();
-  }, []);
+  }, []); // ← this is correct
+
+  // --- REAL-TIME LIVE DEVICE UPDATES FROM SOCKET.IO ---
+  useDeviceSocket(payload => {
+    const { deviceId, temperature, humidity } = payload;
+
+    setDevices(prev =>
+      prev.map(d =>
+        d.id === deviceId
+          ? {
+              ...d,
+              temp: temperature,
+              humidity,
+              bgColor:
+                temperature < 25 ? temp2 : temperature < 30 ? temp1 : temp3,
+            }
+          : d
+      )
+    );
+
+    // also update single selected device panel
+    if (selectedDeviceId === deviceId) {
+      setDeviceData(prev => ({
+        ...prev,
+        temperature,
+        humidity,
+        status:
+          temperature < 20
+            ? 'Low Temp'
+            : temperature < 30
+            ? 'Normal'
+            : 'High Temp',
+        lastRead: new Date().toLocaleTimeString(),
+      }));
+    }
+  });
 
   // update pie when filter changes
   useEffect(() => {
@@ -192,7 +228,7 @@ export default function Dashboard() {
   useEffect(() => {
     const fetchDeviceList = async () => {
       try {
-        const res = await axios.get('/api/devices');
+        const res = await API.get('/devices');
         const list = res.data?.devices || [];
         setDeviceList(list);
         if (list.length > 0 && !selectedDeviceId) {
@@ -216,7 +252,7 @@ export default function Dashboard() {
       try {
         setLoadingDevice(true);
 
-        const res = await axios.get(`/api/devices/${selectedDeviceId}`);
+        const res = await API.get(`/devices/${selectedDeviceId}`);
 
         // 🔥 Updated for NEW API structure
         const today = res.data?.today;
