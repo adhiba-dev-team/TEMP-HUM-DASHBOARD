@@ -222,7 +222,7 @@ export function startSerialListener(
             `Skipping alert for Device ${parsed.id} — still on cooldown (${minutes} min left)`
           );
         } else {
-const alertMsg = `⚠️ Device ${parsed.id} battery critical: ${batteryValue}%`;
+const alertMsg = `Device ${parsed.id} battery critical: ${batteryValue}`;
           console.log(
             `[Battery Alert] Triggered for Device ${parsed.id} → ${alertMsg}`
           );
