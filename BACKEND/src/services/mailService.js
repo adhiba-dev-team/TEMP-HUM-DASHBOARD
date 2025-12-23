@@ -1,14 +1,13 @@
 import fs from 'fs';
 import path from 'path';
 import { google } from 'googleapis';
-import dotenv from 'dotenv';
-dotenv.config();
+// import dotenv from 'dotenv';
+// dotenv.config();
 
 const __dirname = new URL('.', import.meta.url).pathname;
 
 const CREDENTIALS_PATH = path.join(__dirname, '../../credentials.json');
 const TOKEN_PATH = path.join(__dirname, '../../token.json');
-
 
 function loadCredentials() {
   return JSON.parse(fs.readFileSync(CREDENTIALS_PATH, 'utf8'));
@@ -32,15 +31,18 @@ export async function sendMail(to, subject, html, attachments = []) {
       throw new Error('Recipient email is required');
     }
 
-const credentials = loadCredentials();
-const token = loadToken();
+    const credentials = loadCredentials();
+    const token = loadToken();
 
-const { client_id, client_secret, redirect_uris } = credentials.web;
+    const { client_id, client_secret, redirect_uris } = credentials.web;
 
-const auth = new google.auth.OAuth2(client_id, client_secret, redirect_uris[0]);
+    const auth = new google.auth.OAuth2(
+      client_id,
+      client_secret,
+      redirect_uris[0]
+    );
 
-auth.setCredentials(token);
-
+    auth.setCredentials(token);
 
     const gmail = google.gmail({ version: 'v1', auth });
 
@@ -86,9 +88,9 @@ ${fileData}
       requestBody: { raw: encodedMessage },
     });
 
-    console.log('📨 Gmail sent to:', to);
+    console.log('Gmail sent to:', to);
   } catch (error) {
-    console.error('❌ Gmail Error full:', {
+    console.error('Gmail Error full:', {
       message: error.message,
       errors: error.errors,
       response: error.response?.data,
@@ -96,7 +98,6 @@ ${fileData}
     throw error;
   }
 }
-
 
 export async function sendGmail(to, subject, html, attachments = []) {
   try {

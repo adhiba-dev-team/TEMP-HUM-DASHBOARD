@@ -7,13 +7,13 @@ import { sendPushNotification } from './onesignalService.js';
 import { sendMail } from './mailService.js';
 import redisClient from '../config/redis.js';
 
-const ALERT_EMAIL = process.env.ALERT_EMAIL || process.env.MAIL_USER;
+// const ALERT_EMAIL = process.env.ALERT_EMAIL || process.env.MAIL_USER;
 
-if (!ALERT_EMAIL) {
-  console.warn(
-    '[Battery Alert] ALERT_EMAIL and MAIL_USER are not set. Battery alert emails will be skipped.'
-  );
-}
+// if (!ALERT_EMAIL) {
+//   console.warn(
+//     '[Battery Alert] ALERT_EMAIL and MAIL_USER are not set. Battery alert emails will be skipped.'
+//   );
+// }
 
 function parseSerialData(line) {
   try {
@@ -48,109 +48,110 @@ function parseSerialData(line) {
   }
 }
 
-function batteryLowTemplate({ deviceId, location, battery }) {
-  const today = dayjs().format('DD MMM YYYY');
+// function batteryLowTemplate({ deviceId, location, battery }) {
+//   const today = dayjs().format('DD MMM YYYY');
 
-  return `
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Battery Level Alert – ${location} (${deviceId}) | ${today}</title>
-</head>
+//   return `
+// <!DOCTYPE html>
+// <html lang="en">
+// <head>
+//   <meta charset="UTF-8" />
+//   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+//   <title>Battery Level Alert – ${location} (${deviceId}) | ${today}</title>
+// </head>
 
-<body style="margin:0; padding:0; font-family:Arial, Helvetica, sans-serif; background-color:#f5f5f5;">
-  <table role="presentation" width="100%" cellspacing="0" cellpadding="0"
-    style="background-color:#f5f5f5; padding:20px 0;">
-    <tr>
-      <td align="center">
-        <table role="presentation" width="600" cellpadding="0" cellspacing="0"
-          style="background-color:#ffffff; border-radius:8px; overflow:hidden;">
+// <body style="margin:0; padding:0; font-family:Arial, Helvetica, sans-serif; background-color:#f5f5f5;">
+//   <table role="presentation" width="100%" cellspacing="0" cellpadding="0"
+//     style="background-color:#f5f5f5; padding:20px 0;">
+//     <tr>
+//       <td align="center">
+//         <table role="presentation" width="600" cellpadding="0" cellspacing="0"
+//           style="background-color:#ffffff; border-radius:8px; overflow:hidden;">
 
-          <!-- HEADER -->
-          <tr>
-            <td style="background-color:#313985; color:#ffffff; padding:20px 30px;">
-              <table width="100%">
-                <tr>
-                  <td>
-                    <img 
-                      src="https://raw.githubusercontent.com/ADHIBA-IT-TEAM-2025/IOT-MAIL-IMAGE/main/white-logo.png" 
-                      style="height:45px;"
-                    />
-                  </td>
-                  <td align="right" style="font-size:13px; color:#fff;">
-                    <a href="mailto:support@adhiba.com" style="color:#fff;">support@adhiba.com</a><br/>
-                    Coimbatore
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
+//           <!-- HEADER -->
+//           <tr>
+//             <td style="background-color:#313985; color:#ffffff; padding:20px 30px;">
+//               <table width="100%">
+//                 <tr>
+//                   <td>
+//                     <img 
+//                       src="https://raw.githubusercontent.com/ADHIBA-IT-TEAM-2025/IOT-MAIL-IMAGE/main/white-logo.png" 
+//                       style="height:45px;"
+//                     />
+//                   </td>
+//                   <td align="right" style="font-size:13px; color:#fff;">
+//                     <a href="mailto:support@adhiba.com" style="color:#fff;">support@adhiba.com</a><br/>
+//                     Coimbatore
+//                   </td>
+//                 </tr>
+//               </table>
+//             </td>
+//           </tr>
 
-          <!-- BODY -->
-          <tr>
-            <td style="
-              padding:40px;
-              background:url('https://raw.githubusercontent.com/ADHIBA-IT-TEAM-2025/IOT-MAIL-IMAGE/main/adhiba-logo-bg-gray.png') 
-              no-repeat center;
-              background-size:300px;
-            ">
+//           <!-- BODY -->
+//           <tr>
+//             <td style="
+//               padding:40px;
+//               background:url('https://raw.githubusercontent.com/ADHIBA-IT-TEAM-2025/IOT-MAIL-IMAGE/main/adhiba-logo-bg-gray.png') 
+//               no-repeat center;
+//               background-size:300px;
+//             ">
 
-              <h2 style="color:#FF0000; text-align:center; font-size:18px; margin-bottom:25px;">
-                Battery Level Alert – ${location} (${deviceId}) | ${today}
-              </h2>
+//               <h2 style="color:#FF0000; text-align:center; font-size:18px; margin-bottom:25px;">
+//                 Battery Level Alert – ${location} (${deviceId}) | ${today}
+//               </h2>
 
-              <div style="text-align:center; margin-bottom:20px;">
-                <img 
-                  src="https://raw.githubusercontent.com/ADHIBA-IT-TEAM-2025/IOT-MAIL-IMAGE/main/battery-level-img.png"
-                  width="150"
-                  style="display:block; margin:0 auto;"
-                />
-              </div>
+//               <div style="text-align:center; margin-bottom:20px;">
+//                 <img 
+//                   src="https://raw.githubusercontent.com/ADHIBA-IT-TEAM-2025/IOT-MAIL-IMAGE/main/battery-level-img.png"
+//                   width="150"
+//                   style="display:block; margin:0 auto;"
+//                 />
+//               </div>
 
-              <table cellpadding="5" style="margin:0 auto; font-size:14px;">
-                <tr><td><strong>Device ID</strong></td><td>: ${deviceId}</td></tr>
-                <tr><td><strong>Location</strong></td><td>: ${location}</td></tr>
-                <tr><td><strong>Battery Level</strong></td><td>: ${battery}% (Critical)</td></tr>
-              </table>
+//               <table cellpadding="5" style="margin:0 auto; font-size:14px;">
+//                 <tr><td><strong>Device ID</strong></td><td>: ${deviceId}</td></tr>
+//                 <tr><td><strong>Location</strong></td><td>: ${location}</td></tr>
+//                 <tr><td><strong>Battery Level</strong></td><td>: ${battery}V (Critical)</td></tr>
+//               </table>
 
-              <p style="text-align:center; margin-top:20px; color:#333; font-size:15px;">
-                The battery level has dropped below the safe limit.
-              </p>
+//               <p style="text-align:center; margin-top:20px; color:#333; font-size:15px;">
+//                 The battery level has dropped below the safe limit.
+//               </p>
 
-              <p style="text-align:center; color:#666; font-size:12px;">
-                Please replace or recharge the battery to avoid interruptions.
-              </p>
+//               <p style="text-align:center; color:#666; font-size:12px;">
+//                 Please replace or recharge the battery to avoid interruptions.
+//               </p>
 
-              <hr style="margin:30px 0; border-top:1px solid #eee;" />
+//               <hr style="margin:30px 0; border-top:1px solid #eee;" />
 
-              <p style="font-size:13px; color:#333;">
-                Best Regards,<br/>
-                <strong>Team Adhiba</strong><br/>
-                Empowering Innovation with Smart Monitoring<br/>
-                support@adhiba.com<br/>
-                Coimbatore
-              </p>
+//               <p style="font-size:13px; color:#333;">
+//                 Best Regards,<br/>
+//                 <strong>Team Adhiba</strong><br/>
+//                 Empowering Innovation with Smart Monitoring<br/>
+//                 support@adhiba.com<br/>
+//                 Coimbatore
+//               </p>
 
-            </td>
-          </tr>
+//             </td>
+//           </tr>
 
-        </table>
-      </td>
-    </tr>
-  </table>
-</body>
+//         </table>
+//       </td>
+//     </tr>
+//   </table>
+// </body>
 
-</html>
-  `;
-}
-
+// </html>
+//   `;
+// }
 
 export function startSerialListener(
   portPath = '/dev/ttyUSB0',
   baudRate = 9600
 ) {
+  console.log('🔥 SERIAL LISTENER STARTED'); // 👈 ADD THIS
+
   try {
     const port = new SerialPort({ path: portPath, baudRate });
     const parser = port.pipe(new ReadlineParser({ delimiter: '\n' }));
@@ -160,6 +161,8 @@ export function startSerialListener(
     );
 
     parser.on('data', async line => {
+      console.log('[SERIAL RAW]', line);
+
       const parsed = parseSerialData(line);
       if (!parsed || !parsed.id) return;
 
@@ -196,7 +199,6 @@ export function startSerialListener(
       );
 
       // =================== BATTERY CHECK & ALERT ===================
-      // =================== BATTERY CHECK & ALERT ===================
       console.log(
         '[DEBUG] Parsed battery raw =',
         parsed.bs,
@@ -205,15 +207,26 @@ export function startSerialListener(
       );
 
       const batteryValue = parseFloat(parsed.bs);
-      console.log('[DEBUG] Parsed batteryValue =', batteryValue);
 
-      if (!isNaN(batteryValue) && batteryValue < 5.0) {
+      console.log(
+        '[BATTERY DEBUG]',
+        'device:',
+        parsed.id,
+        'battery:',
+        batteryValue,
+        'threshold:',
+        3.8
+      );
+
+      if (!isNaN(batteryValue) && batteryValue < 10) {
         // DEBUG LOGS TO CONFIRM EXECUTION
         console.log('[BATTERY] CHECKING BATTERY BLOCK RUNS...');
         console.log('[BATTERY] Raw:', parsed.bs, '| Parsed:', batteryValue);
 
         const cooldownKey = `alert:device:${parsed.id}`;
         const onCooldown = await redisClient.exists(cooldownKey);
+
+        console.log('[REDIS] cooldown exists:', onCooldown);
 
         if (onCooldown) {
           const ttl = await redisClient.ttl(cooldownKey);
@@ -222,7 +235,11 @@ export function startSerialListener(
             `Skipping alert for Device ${parsed.id} — still on cooldown (${minutes} min left)`
           );
         } else {
-const alertMsg = `Device ${parsed.id} battery critical: ${batteryValue}`;
+          const alertMsg =
+            `⚠️ Battery Low Alert\n` +
+            `Device: ${parsed.id}\n` +
+            `Battery: ${batteryValue} V`;
+
           console.log(
             `[Battery Alert] Triggered for Device ${parsed.id} → ${alertMsg}`
           );
@@ -241,7 +258,6 @@ const alertMsg = `Device ${parsed.id} battery critical: ${batteryValue}`;
 
               const html = batteryLowTemplate({
                 deviceId: parsed.id,
-                location: parsed.loc || 'Unknown Location',
                 battery: batteryValue,
               });
 

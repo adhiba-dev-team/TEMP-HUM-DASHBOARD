@@ -1,4 +1,4 @@
-import dotenv from 'dotenv';
+// import dotenv from 'dotenv';
 import { queueWrite } from '../utils/dbQueue.js';
 import { getDb } from './dbClient.js';
 
@@ -10,7 +10,7 @@ dayjs.extend(utc);
 dayjs.extend(timezone);
 
 
-dotenv.config();
+// dotenv.config();
 
 const db = getDb();
 
@@ -76,7 +76,17 @@ db.exec(`
 
 
 export function createDeviceTable(deviceId) {
-  const tableName = `device_${deviceId}`;
+
+   if (
+     !Number.isInteger(deviceId) ||
+     deviceId <= 0 ||
+     deviceId > 1000 // safety upper bound
+   ) {
+     throw new Error(`Invalid deviceId: ${deviceId}`);
+   }
+
+   const tableName = `device_${deviceId}`;
+   
 
   // Check device record
   const device = db.prepare('SELECT * FROM devices WHERE id = ?').get(deviceId);

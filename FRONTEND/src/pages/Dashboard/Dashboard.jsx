@@ -56,13 +56,28 @@ export default function Dashboard() {
         const listRes = await API.get('/devices');
         const deviceListRes = listRes.data?.devices || [];
 
+        setDeviceList(deviceListRes);
+
+        if (deviceListRes.length > 0 && !selectedDeviceId) {
+          setSelectedDeviceId(deviceListRes[0].id);
+        }
+
         const results = await Promise.allSettled(
           deviceListRes.map(async d => {
             try {
               const res = await API.get(`/devices/${d.id}`);
               const today = res.data?.today;
+if (!today) {
+  return {
+    id: d.id,
+    name: d.name.replace('device_', 'Device '),
+    temp: null,
+    humidity: null,
+    bgColor: temp2,
+  };
+}
 
-              if (!today) return null;
+
 
               return {
                 id: d.id,
@@ -93,7 +108,12 @@ export default function Dashboard() {
           d => savedStates[d.id] !== false
         );
 
-        setDevices(filteredDevices);
+       setDevices(prev => {
+         const map = new Map(prev.map(d => [d.id, d]));
+         filteredDevices.forEach(d => map.set(d.id, d));
+         return Array.from(map.values());
+       });
+
       } catch (err) {
         console.error('Error loading devices:', err);
       } finally {
@@ -178,39 +198,29 @@ export default function Dashboard() {
   }, []); // ← this is correct
 
   // --- REAL-TIME LIVE DEVICE UPDATES FROM SOCKET.IO ---
-  useDeviceSocket(payload => {
-    const { deviceId, temperature, humidity } = payload;
+useDeviceSocket(payload => {
+  const { deviceId, temperature, humidity } = payload;
 
-    setDevices(prev =>
-      prev.map(d =>
-        d.id === deviceId
-          ? {
-              ...d,
-              temp: temperature,
-              humidity,
-              bgColor:
-                temperature < 25 ? temp2 : temperature < 30 ? temp1 : temp3,
-            }
-          : d
-      )
-    );
-
-    // also update single selected device panel
-    if (selectedDeviceId === deviceId) {
-      setDeviceData(prev => ({
-        ...prev,
-        temperature,
-        humidity,
-        status:
-          temperature < 20
-            ? 'Low Temp'
-            : temperature < 30
-            ? 'Normal'
-            : 'High Temp',
-        lastRead: new Date().toLocaleTimeString(),
-      }));
+  setDevices(prev => {
+    // ✅ update ONLY if device already exists
+    if (!prev.some(d => d.id === deviceId)) {
+      return prev; // ignore unknown device
     }
+
+    return prev.map(d =>
+      d.id === deviceId
+        ? {
+            ...d,
+            temp: temperature,
+            humidity,
+            bgColor:
+              temperature < 25 ? temp2 : temperature < 30 ? temp1 : temp3,
+          }
+        : d
+    );
   });
+});
+
 
   // update pie when filter changes
   useEffect(() => {
@@ -225,23 +235,23 @@ export default function Dashboard() {
   }, [filter, allAverages]);
 
   // Load device list for single device selector
-  useEffect(() => {
-    const fetchDeviceList = async () => {
-      try {
-        const res = await API.get('/devices');
-        const list = res.data?.devices || [];
-        setDeviceList(list);
-        if (list.length > 0 && !selectedDeviceId) {
-          setSelectedDeviceId(list[0].id);
-        }
-      } catch (err) {
-        console.error('Failed to load device list', err);
-      }
-    };
+  // useEffect(() => {
+  //   const fetchDeviceList = async () => {
+  //     try {
+  //       const res = await API.get('/devices');
+  //       const list = res.data?.devices || [];
+  //       setDeviceList(list);
+  //       if (list.length > 0 && !selectedDeviceId) {
+  //         setSelectedDeviceId(list[0].id);
+  //       }
+  //     } catch (err) {
+  //       console.error('Failed to load device list', err);
+  //     }
+  //   };
 
-    fetchDeviceList();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  //   fetchDeviceList();
+  //   // eslint-disable-next-line react-hooks/exhaustive-deps
+  // }, []);
 
   // Load single device data when selectedDeviceId changes
 

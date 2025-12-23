@@ -6,19 +6,12 @@ import { sendPushNotification } from '../services/onesignalService.js';
 
 const router = express.Router();
 
-router.post('/data', (req, res) => {
-  console.log('🔥 /api/iot/data HIT');
+router.post('/data', async (req, res) => {
+  console.log('🔥 /iot/data HIT');
   console.log('HEADERS:', req.headers);
   console.log('BODY:', req.body);
 
   try {
-    // ✅ DEVICE AUTH (API KEY ONLY)
-    const apiKey = req.headers['x-api-key'];
-
-    if (!apiKey || apiKey !== process.env.DEVICE_API_KEY) {
-      return res.status(401).json({ error: 'invalid apikey' });
-    }
-
     const { deviceId, temperature, humidity, battery, timestamp } = req.body;
 
     if (!deviceId || temperature == null || humidity == null) {
@@ -51,7 +44,6 @@ router.post('/data', (req, res) => {
       `UPDATE devices SET last_update = datetime('now') WHERE id = ?`
     ).run(deviceId);
 
-    // 🔥 socket
     global.io?.emit('device_update', {
       deviceId,
       temperature,
@@ -60,11 +52,63 @@ router.post('/data', (req, res) => {
       timestamp,
     });
 
+    // ================= BATTERY ALERT (BACKEND) =================
+    const LOW_BATTERY_LEVEL = 3.8; // volts
+    const ALERT_COOLDOWN_SECONDS = 60; // 1 minutes
+
+    console.log(
+      '[BATTERY CHECK]',
+      'device:',
+      deviceId,
+      'battery:',
+      battery,
+      'threshold:',
+      LOW_BATTERY_LEVEL
+    );
+
+    if (battery != null && Number(battery) <= LOW_BATTERY_LEVEL) {
+      const alertKey = `alert:device:${deviceId}`;
+      const onCooldown = await redisClient.exists(alertKey);
+
+      console.log('[BATTERY] onCooldown:', onCooldown);
+
+      if (!onCooldown) {
+        const alertMsg =
+          `⚠️ Battery Low Alert\n` +
+          `Device ${deviceId}\n` +
+          `Battery: ${battery} V`;
+
+        try {
+          await sendPushNotification('Battery Alert', alertMsg);
+
+          await sendMail(
+            process.env.ALERT_EMAIL,
+            `Battery Low Alert - Device ${deviceId}`,
+            `Device ${deviceId} battery is low.\nCurrent level: ${battery} V`
+          );
+
+          await redisClient.setEx(alertKey, ALERT_COOLDOWN_SECONDS, 'true');
+
+          console.log(
+            `[BATTERY ALERT] Sent for Device ${deviceId} (${battery}V)`
+          );
+        } catch (err) {
+          console.error('[BATTERY ALERT ERROR]', err);
+        }
+      } else {
+        console.log(
+          `[BATTERY ALERT] Skipped – cooldown active for Device ${deviceId}`
+        );
+      }
+    }
+    // ==========================================================
+
     return res.json({ success: true });
   } catch (err) {
     console.error(err);
     return res.status(500).json({ error: 'Internal server error' });
   }
 });
+
 
 export default router;

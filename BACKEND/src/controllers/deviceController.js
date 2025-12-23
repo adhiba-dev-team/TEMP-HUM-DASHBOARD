@@ -1,5 +1,5 @@
 import db from '../config/db.js';
-import { sendBatteryLowPush } from '../utils/oneSignal.js';
+import { sendPushNotification } from '../services/onesignalService.js'
 
 export function addDevice(req, res) {
   try {
@@ -47,10 +47,9 @@ export function getAllDevices(req, res) {
     const rows = db
       .prepare(
         `
-      SELECT 
-        id AS id,
-        device_name AS name,
-        location,
+      SELECT
+        id,
+        name,
         last_update
       FROM devices
     `
@@ -63,10 +62,16 @@ export function getAllDevices(req, res) {
       devices: rows,
     });
   } catch (err) {
-    console.error(err);
-    return res.status(500).json({ error: 'Failed to fetch devices' });
+    console.error('getAllDevices error:', err.message);
+
+    return res.status(500).json({
+      status: 'error',
+      message: 'Failed to fetch devices',
+    });
   }
 }
+
+
 
 function todayStart() {
   return new Date().toISOString().split('T')[0] + ' 00:00:00';
@@ -242,21 +247,28 @@ export function getSingleDevice(req, res) {
     }
 
     // ======================= DEFAULT (Today Latest) =======================
-    const today = db
-      .prepare(
-        `
-      SELECT temperature, humidity, battery, timestamp
-      FROM ${tableName}
-      ORDER BY id DESC LIMIT 1
+const today = db
+  .prepare(
     `
-      )
-      .get();
+    SELECT temperature, humidity, battery, timestamp
+    FROM ${tableName}
+    ORDER BY id DESC LIMIT 1
+  `
+  )
+  .get();
 
-    return res.json({
-      status: 'success',
-      id: Number(id), // 🔥 frontend expects id
-      today: today || null,
-    });
+return res.json({
+  status: 'success',
+  id: Number(id),
+  today: today ?? {
+    temperature: null,
+    humidity: null,
+    battery: null,
+    timestamp: null,
+  },
+});
+
+
   } catch (err) {
     console.error('API Error:', err);
     return res.status(500).json({ error: 'Internal Server Error' });
@@ -296,7 +308,7 @@ export async function handleTelemetry(req, res) {
   // save telemetry normally...
 
   if (battery <= BATTERY_LOW) {
-    await sendBatteryLowPush(deviceId, battery);
+    await sendPushNotification(deviceId, battery);
   }
 
   res.json({ ok: true });

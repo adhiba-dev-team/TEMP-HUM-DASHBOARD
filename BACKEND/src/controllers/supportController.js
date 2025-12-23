@@ -1,9 +1,9 @@
 import { sendMail } from '../services/mailService.js';
 import db from '../config/db.js';
 import dayjs from 'dayjs';
-import dotenv from 'dotenv';
+// import dotenv from 'dotenv';
 
-dotenv.config();
+// dotenv.config();
 
 export const sendSupportMail = async (req, res) => {
   try {
